@@ -28,3 +28,12 @@ export async function semanticSearch(vector, topK = 10) {
 
   return result.matches;
 }
+
+export async function deleteVideoVector(videoId) {
+  if (!videoId) return;
+
+  await videoIndex.deleteMany({
+    ids: [videoId.toString()],
+  });
+}
+

@@ -10,7 +10,7 @@ import {Comment} from "../models/comment.model.js"
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 import { Playlist } from "../models/playlists.model.js";
 import { createEmbedding } from "../vector DB(pinecone)/createEmbedding.js";
-import { semanticSearch,upsertVideoVector } from "../vector DB(pinecone)/semanticSearch.js";
+import { semanticSearch,upsertVideoVector,deleteVideoVector} from "../vector DB(pinecone)/semanticSearch.js";
 import { buildVideoText } from "../utils/buildVideoText.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -120,7 +120,7 @@ const semanticVideoSearch = asyncHandler(async (req, res) => {
   }
   const queryEmbedding = await createEmbedding(query);
 
-  const matches = await semanticSearch(queryEmbedding, 1);
+  const matches = await semanticSearch(queryEmbedding, 10);
 
   const videoIds = matches.map((m) => m.id);
 
@@ -462,6 +462,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
     console.error("Cloudinary deletion failed:", error);
   }
   await video.deleteOne();
+  try {
+    await deleteVideoVector(videoId);
+  } catch (error) {
+    console.error("Pinecone vector deletion failed:", error);
+    // do NOT block response
+  }
   return res.status(200).json(
     new ApiResponse(200, {}, "Video deleted successfully")
   );
