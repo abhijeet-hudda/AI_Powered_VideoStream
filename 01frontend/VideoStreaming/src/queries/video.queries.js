@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient,useInfiniteQuery } from "@tanstack/react-query";
 import videoApi from "../api/video.api"; 
 import { toast } from "react-hot-toast"; // Recommended for production feedback
 export const videoKeys = {
@@ -7,9 +7,14 @@ export const videoKeys = {
     list: (filters) => [...videoKeys.lists(), { ...filters }],
     details: () => [...videoKeys.all, "detail"],
     detail: (id) => [...videoKeys.details(), id],
+    semantic: () => [...videoKeys.all, "semantic"],
+    semanticList: (query) => [
+      ...videoKeys.semantic(),
+      { query },
+    ],
 };
 
-// 1. Fetching Hook
+// // 1. Fetching Hook
 export const useVideos = (filters) => {
     //console.log(filters)
     return useQuery({
@@ -19,6 +24,33 @@ export const useVideos = (filters) => {
         staleTime: 5 * 60 * 1000,
         //staleTime is the amount of time React Query considers fetched data “fresh.”
     });
+};
+
+export const useSemanticVideos = (query) => {
+  return useQuery({
+    queryKey: videoKeys.semanticList(query),
+    queryFn: ({ signal }) =>videoApi.getVideosBySemanticSearch({ query }, signal),
+    enabled: !!query,
+    staleTime: 30 * 1000,
+    placeholderData: (previousData) => previousData,
+  });
+};
+
+export const useInfiniteVideos = (filters) => {
+  return useInfiniteQuery({
+    queryKey: videoKeys.list(filters),
+    queryFn: ({ pageParam = 1 }) =>
+      videoApi.getAllVideos({
+        ...filters,
+        page: pageParam,
+      }),
+    getNextPageParam: (lastPage) => {
+      const data = lastPage?.data;
+      return data?.hasNextPage ? data.nextPage : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+  });
 };
 
 /*

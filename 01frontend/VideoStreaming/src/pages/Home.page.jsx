@@ -1,9 +1,10 @@
-import React, { useEffect } from "react"; // Removed 'use' (not needed here)
-import { useVideos } from "../queries/video.queries";
+import React, { useEffect,useMemo } from "react"; // Removed 'use' (not needed here)
+import { useInfiniteVideos } from "../queries/video.queries";
 import Container from "../componets/container/Container";
 import VideoCard from "../componets/VideoCard";
 import { fetchCurrentUser } from "../store/features/authFeatures/auth.Thunks";
 import { useDispatch } from "react-redux";
+import { useInfiniteScroll } from "../componets/InfiniteScroll";
 
 const VideoSkeleton = () => (
   <div className="flex flex-col gap-2">
@@ -23,8 +24,27 @@ function Home() {
   // useEffect(()=>{
   //   dispatch(fetchCurrentUser());
   // },[dispatch])
-  const { data, error, isLoading } = useVideos();
-  const allVideos = data?.data?.docs || [];
+  const filters = useMemo(() => ({ limit: 10 }), []);
+  const {
+    data,
+    error,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch
+  } = useInfiniteVideos(filters);
+  //console.log("infite data",data);
+  const loaderRef = useInfiniteScroll({
+    fetchNextPage,
+    hasNextPage,
+  });
+
+  const allVideos =
+    data?.pages.flatMap((page) => page?.data?.docs) || [];
+  //console.log("docs length:", data?.data?.docs?.length);
+  //console.log("total docs:", data?.data?.totalDocs);
+
   //console.log("allVideos",allVideos)
   if (isLoading) {
     return (
@@ -47,9 +67,9 @@ function Home() {
              <p className="text-red-500 text-lg font-semibold">
                 Failed to load videos.
              </p>
-             <p className="text-gray-500">{error.message}</p>
+             {/* <p className="text-gray-500">{error.message}</p> */}
              <button 
-                onClick={() => window.location.reload()} 
+                onClick={() => refetch()} 
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
              >
                 Retry
@@ -76,9 +96,29 @@ function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {allVideos.map((video) => (
             <div key={video._id} className="w-full">
-               <VideoCard videoObject={video} />
+               <VideoCard videoObject={video}/>
             </div>
           ))}
+        </div>
+        <div
+          ref={loaderRef}
+          className="flex justify-center items-center py-6"
+        >
+          {isFetchingNextPage && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
+              {Array(4)
+                .fill(null)
+                .map((_, index) => (
+                  <VideoSkeleton key={index} />
+                ))}
+            </div>
+          )}
+
+          {/* {!hasNextPage && (
+            <p className="text-gray-500 text-sm">
+              You have reached the end 🎉
+            </p>
+          )} */}
         </div>
       </Container>
     </div>

@@ -1,21 +1,37 @@
 import React, { useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { useVideos } from "../queries/video.queries";
+import { useSemanticVideos } from "../queries/video.queries";
 import Container from "../componets/container/Container.jsx";
 
 function SearchPage() {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("query");
-  console.log("query",query)
-  const { data, isLoading, error, refetch } = useVideos({ 
-    query: query, 
-    sortBy: "relevance" // Optional: backend sort logic
-  });
-  console.log("data",data)
+  const query = searchParams.get("query")?.trim() || "";
+
+  const { data, isLoading, error } = useSemanticVideos(query);
+
   const videos = data?.data?.docs || [];
-  useEffect(() => {
-    refetch();
-  }, [query, refetch]);
+
+  // 🔹 Empty search (user opened /search directly)
+  if (!query) {
+    return (
+      <Container>
+        <div className="flex items-center justify-center h-[60vh] text-gray-500">
+          Start typing to search videos
+        </div>
+      </Container>
+    );
+  }
+
+  // 🔹 Error state
+  if (error) {
+    return (
+      <Container>
+        <div className="flex items-center justify-center h-[60vh] text-red-500">
+          Failed to load search results
+        </div>
+      </Container>
+    );
+  }
 
   if (isLoading) {
     return (

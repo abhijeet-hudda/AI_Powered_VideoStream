@@ -9,6 +9,9 @@ import { Like } from "../models/like.model.js";
 import {Comment} from "../models/comment.model.js"
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 import { Playlist } from "../models/playlists.model.js";
+import { createEmbedding } from "../vector DB(pinecone)/createEmbedding.js";
+import { semanticSearch,upsertVideoVector } from "../vector DB(pinecone)/semanticSearch.js";
+import { buildVideoText } from "../utils/buildVideoText.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -105,6 +108,40 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, videos, "videos fetched successfully"));
 });
+const semanticVideoSearch = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    return res.status(400).json(new ApiResponse(
+      400,
+      {},
+      "Query parameter is required"
+    ));
+  }
+  const queryEmbedding = await createEmbedding(query);
+
+  const matches = await semanticSearch(queryEmbedding, 1);
+
+  const videoIds = matches.map((m) => m.id);
+
+  //Fetch actual videos from MongoDB
+  const videos = await Video.find({
+    _id: { $in: videoIds },
+  }).populate("owner","username avatar");
+
+  //Keep Pinecone ranking order
+  const orderedVideos = videoIds.map(
+    (id) => videos.find((v) => v._id.toString() === id)
+  );
+
+  res.json(new ApiResponse(
+    200,
+    {
+    docs: orderedVideos.filter(Boolean),
+    },
+    "Semantic search results fetched successfully"
+  ));
+});
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
@@ -146,6 +183,16 @@ const publishAVideo = asyncHandler(async (req, res) => {
   if (!createdVideo) {
     throw new ApiError(500, "Error to save video in db");
   }
+  // Create embedding and upsert to Pinecone
+  const videoText = buildVideoText(createdVideo);
+  const embedding = await createEmbedding(videoText);
+  //console.log("Embedding type:", Array.isArray(embedding));
+ //console.log("Embedding length:", embedding?.length);
+
+  await upsertVideoVector(createdVideo._id.toString(), embedding, {
+    title: createdVideo.title,
+  });
+
   return res
     .status(201)
     .json(new ApiResponse(201, createdVideo, "video published successfully"));
@@ -427,4 +474,5 @@ export {
   updateVideo,
   togglePublishStatus,
   deleteVideo
+  ,semanticVideoSearch
 };

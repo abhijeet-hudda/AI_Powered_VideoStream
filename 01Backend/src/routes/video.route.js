@@ -6,6 +6,7 @@ import {
     getVideoById,
     publishAVideo,
     updateVideo,
+    semanticVideoSearch
    } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { toggleVideoLike } from "../controllers/like.controller.js";
@@ -15,6 +16,7 @@ const router = Router();
 router.use(verifyJWT);
 
 router.route("/").get(getAllVideos)
+router.route("/semantic-search").get(semanticVideoSearch);
 router.route("/publish").post(
     upload.fields([
         {

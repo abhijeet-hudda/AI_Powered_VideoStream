@@ -2,12 +2,13 @@ import api from "./axios.instance";
 
 async function getAllVideos({
   page = 1,
-  limit = 10,
+  limit = 5,
   query,
   sortBy,
   sortType,
   userId,
 } = {}) {
+  //console.log("api call getAllVideos",limit);
   const response = await api.get("/videos", {
     params: {
       page,
@@ -21,7 +22,16 @@ async function getAllVideos({
   //console.log("video",response.data.data.docs)
   return response.data;
 }
-
+async function getVideosBySemanticSearch({ query }, signal) {
+  if (!query || !query.trim()) {
+    return { data: { docs: [] } };
+  }
+  const res = await api.get("/videos/semantic-search", {
+    params: { query },
+    signal,
+  });
+  return res.data;
+}
 async function publishVideo(formData) {
   const response = await api.post("/videos/publish", formData, {
     headers: {
@@ -53,5 +63,6 @@ export default {
     publishVideo,
     getVideoById,
     updateVideo,
-    deleteVideo
+    deleteVideo,
+    getVideosBySemanticSearch
 }
