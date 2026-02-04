@@ -5,13 +5,43 @@
 import dotenv from "dotenv";
 import connectDB from "./db/db_connect.js";
 import { app } from "./app.js";
+import http from "http"
+import {Server} from "socket.io"
+
 dotenv.config({
     path: "./.env"
 })
 
+// Create HTTP server using Express app
+const server = http.createServer(app);
+
+// Attach Socket.IO to HTTP server
+export const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  // user joins personal room
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined socket room`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
+});
+
+
 connectDB()
 .then(()=>{
-    app.listen(process.env.PORT || 8000,()=>{
+    server.listen(process.env.PORT || 8000,()=>{
         console.log(`server is running at port :${process.env.PORT}`)
     })
 })

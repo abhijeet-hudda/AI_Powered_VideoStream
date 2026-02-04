@@ -12,6 +12,9 @@ import { Playlist } from "../models/playlists.model.js";
 import { createEmbedding } from "../vector DB(pinecone)/createEmbedding.js";
 import { semanticSearch,upsertVideoVector,deleteVideoVector} from "../vector DB(pinecone)/semanticSearch.js";
 import { buildVideoText } from "../utils/buildVideoText.js";
+import { Subscription } from "../models/subscription.model.js";
+import { Notification } from "../models/notification.model.js";
+import { io } from "../index.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -192,6 +195,28 @@ const publishAVideo = asyncHandler(async (req, res) => {
   await upsertVideoVector(createdVideo._id.toString(), embedding, {
     title: createdVideo.title,
   });
+  //this is notification part 
+  const subscribers = await Subscription.find({
+    channel: createdVideo.owner,
+  }).select("subscriber");
+
+  for (const sub of subscribers) {
+    const notification = await Notification.create({
+      receiver: sub.subscriber,
+      sender: createdVideo.owner,
+      notificationtype: "NEW_VIDEO",
+      entityId: createdVideo._id,
+      entityType: "Video",
+      message: `${req.user.username} uploaded a new video`,
+    });
+    io.to(sub.subscriber.toString()).emit("notification", {
+      _id: notification._id,
+      notificationtype: notification.notificationtype,
+      message: notification.message,
+      entityId: createdVideo._id,
+      createdAt: notification.createdAt,
+    });
+  }
 
   return res
     .status(201)

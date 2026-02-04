@@ -33,7 +33,7 @@ export async function createEmbedding(text) {
     normalize: true,
   });
 
-  console.log("Embedding output:", output);
+  //console.log("Embedding output:", output);
 
   return Array.from(output.data);
 }
