@@ -16,10 +16,6 @@ const notificationSchema = new Schema({
     enum: ["LIKE", "COMMENT", "REPLY", "SUBSCRIBE", "NEW_VIDEO"],
     required: true,
   },
-  entityId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-  },
   entityType: {
     type: String,
     enum: ["Video", "Comment", "Playlist"],
@@ -41,3 +37,6 @@ const notificationSchema = new Schema({
 },{timestamps:true})
 
 export const Notification = mongoose.model("Notification",notificationSchema)
+
+
+

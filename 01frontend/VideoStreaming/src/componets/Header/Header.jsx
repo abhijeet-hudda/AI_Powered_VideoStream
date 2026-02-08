@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser,fetchCurrentUser } from "../../store/features/authFeatures/auth.Thunks"; // Adjust path
+import {
+  logoutUser,
+  fetchCurrentUser,
+} from "../../store/features/authFeatures/auth.Thunks"; // Adjust path
 import Container from "../container/Container";
 import toast from "react-hot-toast";
+import { socket } from "../../socket/socket.js";
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "../../queries/notification.queries";
 
 function Header({ toggleSidebar }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   // Get Auth State from Redux
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   //console.log("header user",user);
@@ -16,16 +27,23 @@ function Header({ toggleSidebar }) {
     dispatch(logoutUser());
     toast.success("logout ho gya");
     setShowDropdown(false);
+    setShowNotifications(false);
     navigate("/login");
   };
-  const [searchText ,setSearchText] = useState("")
-  const handleSearch = ()=>{
+  const [searchText, setSearchText] = useState("");
+  const handleSearch = () => {
     if (searchText.trim()) {
       // const query = searchText.replace(/_/g, " ").trim();
-      navigate(`/search?query=${searchText}`); 
+      navigate(`/search?query=${searchText}`);
     }
     setSearchText("");
-  }
+  };
+  const { data: notifications = [] } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const { mutate: markAsRead } = useMarkNotificationRead();
+  const {mutate: allMarkAsRead} = useMarkAllNotificationsRead()
+
+
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b z-50 px-4">
       <div className="flex items-center justify-between h-full">
@@ -110,10 +128,13 @@ function Header({ toggleSidebar }) {
               type="text"
               placeholder="Search"
               value={searchText}
-              onChange={(e)=>(setSearchText(e.target.value))}
+              onChange={(e) => setSearchText(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-l-full focus:border-blue-500 focus:outline-none shadow-inner"
             />
-            <button onClick={handleSearch} className="px-5 border border-l-0 border-gray-300 rounded-r-full bg-gray-100 hover:bg-gray-200">
+            <button
+              onClick={handleSearch}
+              className="px-5 border border-l-0 border-gray-300 rounded-r-full bg-gray-100 hover:bg-gray-200"
+            >
               🔍
             </button>
           </div>
@@ -132,26 +153,106 @@ function Header({ toggleSidebar }) {
               </Link>
 
               <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNotifications((prev) => !prev);
+                    setShowDropdown(false);
+                    allMarkAsRead();
+
+                  }}
+                  className="relative p-2 rounded-full hover:bg-gray-100"
+                  aria-label="Notifications"
+                >
+                  <svg
+                    className="w-6 h-6 text-gray-700"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                  >
+                    <path
+                      d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M10 19a2 2 0 0 0 4 0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  {/* UNREAD BADGE */}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* DROPDOWN */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 text-sm font-semibold">
+                      Notifications
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      <div className="max-h-96 overflow-y-auto">
+                        {notifications.map((n) => (
+                          <Link
+                            key={n._id}
+                            to={`/watch/${n.entityId}`}
+                            onClick={() => markAsRead(n._id)}
+                            className={`block px-4 py-3 text-sm border-b border-gray-100 last:border-b-0 ${
+                              n.isRead ? "bg-white" : "bg-blue-50"
+                            } hover:bg-gray-100`}
+                          >
+                            <p className="text-gray-800">{n.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
                 <img
-                  src={user?.user?.avatar || user?.avatar || "https://i.pravatar.cc/40"}
+                  src={
+                    user?.user?.avatar ||
+                    user?.avatar ||
+                    "https://i.pravatar.cc/40"
+                  }
                   alt="avatar"
                   className="w-8 h-8 rounded-full cursor-pointer object-cover"
-                  onClick={() => setShowDropdown(!showDropdown)}
+                  onClick={() => {
+                    setShowDropdown(!showDropdown);
+                    setShowNotifications(false);
+                  }}
                 />
 
                 {showDropdown && (
                   <div className="absolute right-0 top-10 w-60 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-semibold">
-                        {user?.user?.fullname ||user?.fullname || "User"}
+                        {user?.user?.fullname || user?.fullname || "User"}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.user?.email ||user?.email || "@username"}
+                        {user?.user?.email || user?.email || "@username"}
                       </p>
                     </div>
 
                     <Link
-                      to={`/channel/${user?.user?.username||user?.username}`}
+                      to={`/channel/${user?.user?.username || user?.username}`}
                       className="block px-4 py-2 hover:bg-gray-100 text-sm"
                     >
                       Your Channel

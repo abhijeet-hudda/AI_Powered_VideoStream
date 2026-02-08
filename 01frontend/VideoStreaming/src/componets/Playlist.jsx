@@ -8,9 +8,9 @@ import toast from "react-hot-toast";
 import { useUserPlaylists, useCreatePlaylist, useAddVideoToPlaylist } from "../queries/playlist.queries"; 
 
 const Playlist = ({ videoId, onClose }) => {
-  const { user } = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
   //console.log("playlist user",user);
-  const userId = user.user?._id;
+  const userId = user.user?._id || user?._id;
   //console.log("userId",userId)
 
   const { data, isLoading } = useUserPlaylists(userId);

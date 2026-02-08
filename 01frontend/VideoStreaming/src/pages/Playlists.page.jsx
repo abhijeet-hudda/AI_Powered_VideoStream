@@ -6,11 +6,12 @@ import Container from "../componets/container/Container";
 import { Link} from "react-router-dom";
 
 function PlaylistPage() {
-    const { user } = useSelector((state) => state.auth);
-    const userId = user?.user?._id;
+    const user = useSelector((state) => state.auth.user);
+    const userId = user?.user?._id||user?._id ;
+    console.log(userId)
     const { data, isLoading, error } = useUserPlaylists(userId);
-    //console.log(data)
-    const playlists = data?.data?.playlists|| []
+    console.log(data)
+    const playlists = data?.data?.playlists|| [];
     //console.log("playlists",playlists)
     if (isLoading) {
         return (
@@ -49,7 +50,6 @@ function PlaylistPage() {
                         {playlists.map((playlist) => (
                             <Link to={`/watch/${playlist.video[0]}`}  key={playlist._id} >
                                 <PlaylistCard 
-                                   
                                     playlist={playlist}
                                     isOwner={true} 
                                 />

@@ -12,7 +12,7 @@ function Layout() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  //const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   //get logged-in user from redux
   const user = useSelector((state) => state.auth.user);
@@ -37,12 +37,12 @@ function Layout() {
       toast.success(data.message);
 
       // refresh notifications list / unread count
-      // queryClient.invalidateQueries(["notifications"]);
+      queryClient.invalidateQueries(["notifications"]);
     });
      return () => {
       socket.off("notification");
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <div className="flex flex-col h-screen">
