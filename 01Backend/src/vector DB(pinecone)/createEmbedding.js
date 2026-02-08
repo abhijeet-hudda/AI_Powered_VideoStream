@@ -18,7 +18,7 @@ async function getEmbedder() {
       "feature-extraction",
       "sentence-transformers/all-MiniLM-L6-v2",
       {
-        quantized: false, // 🔥 IMPORTANT FIX
+        quantized: false,
       }
     );
   }
