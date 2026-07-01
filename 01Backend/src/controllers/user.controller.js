@@ -26,16 +26,16 @@ const generateRefreshAndAccessToken = async (userId) => {
 
 const userRegister = asyncHandler(async (req, res) => {
   /*  steps for user register 
-        1.get user detail from frontend (wo detail jo user.model me h)
-        2.validation- not empty...
-        3.check if user alredy exists : username, email
-        4.check for image,check for avatar
-        5.upload them to cloudinary, avatar
-        6.create user object - create entry in db
-        7.remove password and refresh token field from response
-        8.check for user creation 
-        9.return response(res)
-    */
+    1.get user detail from frontend (wo detail jo user.model me h)
+    2.validation- not empty...
+    3.check if user alredy exists : username, email
+    4.check for image,check for avatar
+    5.upload them to cloudinary, avatar
+    6.create user object - create entry in db
+    7.remove password and refresh token field from response
+    8.check for user creation 
+    9.return response(res)
+  */
 
   const { fullname, email, username, password } = req.body;
   // console.log("email: ", email);
@@ -44,13 +44,13 @@ const userRegister = asyncHandler(async (req, res) => {
   //validation
   if (
     [fullname, email, username, password].some((field) => field?.trim() === "")
-  ) {
+  ){
     throw new ApiError(400, "All fields are required");
   }
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
-  if (existedUser) {
+  if (existedUser){
     throw new ApiError(409, "User with email or username already exists");
   }
   // middlewares req ke ander or fields add karta h
@@ -348,7 +348,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 const updateUsercoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
 
-  if (!coverImageLocalPath) {
+  if(!coverImageLocalPath){
     throw new ApiError(400, "coverImage file is required");
   }
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
