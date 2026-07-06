@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     WHISPER_MODEL: str
     WHISPER_DEVICE: str
     WHISPER_COMPUTE_TYPE: str
+    HF_TOKEN: str
+    LLM_MODEL: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -26,7 +26,8 @@ class IngestionService:
                 text=chunk,
                 metadata={
                     **metadata,
-                    "chunk": i
+                    "chunk_index": i,
+                    "total_chunks": len(chunks)
                 }
             )
 
@@ -34,7 +35,11 @@ class IngestionService:
 
         logger.info("Uploading documents to Pinecone...")
 
-        vector_store.add_documents(documents)
+        ids = vector_store.add_documents(documents)
+
+        logger.info(
+            f"Uploaded {len(ids)} documents."
+        )
 
         logger.info("Documents uploaded successfully.")
 

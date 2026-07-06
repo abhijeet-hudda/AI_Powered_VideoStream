@@ -4,26 +4,32 @@ from utils.logger import logger
 
 class RetrievalService:
 
-    def __init__(self):
+    def retrieve(
+        self,
+        question: str,
+        video_id: str,
+        k: int = 4
+    ):
 
-        logger.info("Initializing Retriever...")
+        logger.info(
+            f"Retrieving context for video {video_id}"
+        )
 
-        self.retriever = vector_store.as_retriever(
+        retriever = vector_store.as_retriever(
             search_type="similarity",
             search_kwargs={
-                "k": 4
+                "k": k,
+                "filter": {
+                    "video_id": video_id
+                }
             }
         )
 
-        logger.info("Retriever initialized successfully.")
+        documents = retriever.invoke(question)
 
-    def retrieve(self, question: str):
-
-        logger.info(f"Retrieving context for: {question}")
-
-        documents = self.retriever.invoke(question)
-
-        logger.info(f"Retrieved {len(documents)} documents.")
+        logger.info(
+            f"Retrieved {len(documents)} documents."
+        )
 
         return documents
 

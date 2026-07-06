@@ -4,7 +4,7 @@ QA_PROMPT = ChatPromptTemplate.from_template(
 """
 You are an expert AI assistant.
 
-Answer the user's question ONLY using the provided context.
+Answer ONLY using the provided context.
 
 If the answer is not present in the context,
 reply exactly:
