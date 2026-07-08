@@ -13,6 +13,9 @@ import { useDeleteVideo } from "../queries/video.queries";
 import Playlist from "../componets/Playlist";
 import {fetchCurrentUser} from "../store/features/authFeatures/auth.Thunks"
 import CommentSection from "../componets/CommentSection";
+// import AskAI from "../componets/AI component/AskAI.jsx";
+import AskButton from "../componets/AI component/AskButton";
+import AIChatDrawer from "../componets/AI component/AIChatDrawer";
 
 function Video() {
   //videoId => getVideoByID => display video
@@ -46,6 +49,7 @@ function Video() {
     deleteVideo(videoId);
   }
   //console.log(data)
+  const [isAIOpen, setIsAIOpen] = useState(false);
   const [isPlayListOpen,setIsPlayListOpen] = useState(false)
   const searchTitle = data?.title
   const searchDescription  = data?.description;
@@ -168,10 +172,24 @@ function Video() {
                   👎
                 </button>
               </div>
-              <button className="px-4 py-2 bg-gray-300 rounded-full hover:bg-gray-400 font-medium text-sm transition-colors">
+              {/* <button className="px-4 py-2 bg-gray-300 rounded-full hover:bg-gray-400 font-medium text-sm transition-colors">
                 Share
               </button>
               <button onClick={handleDelete} className="px-4 py-2 bg-gray-300 rounded-full hover:bg-gray-400 font-medium text-sm transition-colors">
+                Delete Video
+              </button> */}
+              <button className="px-4 py-2 bg-gray-300 rounded-full hover:bg-gray-400 font-medium text-sm">
+                Share
+              </button>
+
+              <AskButton
+                onClick={() => setIsAIOpen(true)}
+              />
+
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-gray-300 rounded-full hover:bg-gray-400 font-medium text-sm"
+              >
                 Delete Video
               </button>
               <button 
@@ -205,11 +223,18 @@ function Video() {
                         </button>
                     )*/}
           </div>
-          {/*comment ke liye  */}
-          <div className="w-full">
-            <CommentSection 
-            videoId={videoId}
-            />
+          {/* Ask AI */}
+          {/* <div className="w-full mt-6">
+              <AskAI
+                  videoId={videoId}
+              />
+          </div> */}
+
+          {/* Comments */}
+          <div className="w-full mt-6">
+              <CommentSection
+                  videoId={videoId}
+              />
           </div>
         </div>
         {/*right colum */}
@@ -248,6 +273,11 @@ function Video() {
           onClose={() => setIsPlayListOpen(false)} 
         />
       )}
+      <AIChatDrawer
+          open={isAIOpen}
+          onClose={() => setIsAIOpen(false)}
+          videoId={videoId}
+      />
     </Container>
   );
 }

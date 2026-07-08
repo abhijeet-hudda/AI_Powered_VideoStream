@@ -15,6 +15,8 @@ import { buildVideoText } from "../utils/buildVideoText.js";
 import { Subscription } from "../models/subscription.model.js";
 import { Notification } from "../models/notification.model.js";
 import { io } from "../index.js";
+import aiService from "../services/ai.service.js";
+import backgroundAIService from "../services/backgroundAI.service.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -194,6 +196,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   await upsertVideoVector(createdVideo._id.toString(), embedding, {
     title: createdVideo.title,
+  });
+  //background ai processing
+  setImmediate(() => {
+    backgroundAIService.processVideo(createdVideo._id);
   });
   //this is notification part 
   const subscribers = await Subscription.find({
@@ -493,9 +499,112 @@ const deleteVideo = asyncHandler(async (req, res) => {
     console.error("Pinecone vector deletion failed:", error);
     // do NOT block response
   }
+  //for aiproccessed video 
+  try {
+    await aiService.deleteVideo(videoId);
+  } catch (error) {
+    console.error("AI transcript deletion failed:",error.message);
+  }
   return res.status(200).json(
     new ApiResponse(200, {}, "Video deleted successfully")
   );
+});
+const processVideoAI = asyncHandler(async (req, res) => {
+
+    const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+    await backgroundAIService.processVideo(videoId);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {},
+            "AI processing completed."
+        )
+    );
+
+    // const video = await Video.findById(videoId);
+
+    // if (!video) {
+    //     throw new ApiError(404, "Video not found");
+    // }
+
+    // const response = await aiService.processVideo({
+    //     video_id: video._id.toString(),
+    //     videofile: video.videofile,
+    //     thumbnail: video.thumbnail,
+    //     title: video.title,
+    //     description: video.description,
+    //     duration: video.duration,
+    //     owner: video.owner.toString(),
+    //     views: video.views,
+    //     isPublished: video.isPublished,
+    //     createdAt: video.createdAt,
+    // });
+
+    // // Update only after successful AI processing
+    // if (response.success) {
+    //     video.aiProcessed = true;
+    //     await video.save({ validateBeforeSave: false });
+    // }
+
+    // return res.status(200).json(
+    //     new ApiResponse(
+    //         200,
+    //         response,
+    //         "Video processed successfully."
+    //     )
+    // );
+});
+const askVideoQuestion = asyncHandler(async (req, res) => {
+
+    const { videoId } = req.params;
+    const { question } = req.body;
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+
+    if (!question?.trim()) {
+        throw new ApiError(400, "Question is required");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (!video.aiProcessed) {
+        throw new ApiError(
+            400,
+            "This video has not been processed for AI yet."
+        );
+    }
+
+    const answer = await aiService.askQuestion({
+        video_id: video._id.toString(),
+        question: question.trim()
+    });
+
+    if (!answer?.success) {
+        throw new ApiError(
+            500,
+            answer?.message || "AI service failed"
+        );
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+          200,
+          answer,
+          "Answer generated successfully."
+      )
+    );
+
 });
 
 export {
@@ -504,6 +613,8 @@ export {
   getVideoById,
   updateVideo,
   togglePublishStatus,
-  deleteVideo
-  ,semanticVideoSearch
+  deleteVideo,
+  semanticVideoSearch,
+  processVideoAI,
+  askVideoQuestion
 };

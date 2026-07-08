@@ -6,7 +6,9 @@ import {
     getVideoById,
     publishAVideo,
     updateVideo,
-    semanticVideoSearch
+    semanticVideoSearch,
+    processVideoAI,
+    askVideoQuestion
    } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { toggleVideoLike } from "../controllers/like.controller.js";
@@ -42,6 +44,14 @@ router.route("/updateVideo/:videoId").patch(
 )
 router.route("/delete-video/:videoId").delete(deleteVideo);
 router.route("/toggle-videolike/:videoId/like").post(toggleVideoLike)
+router.post(
+    "/:videoId/process-ai",
+    processVideoAI
+);
 
+router.post(
+    "/:videoId/ask",
+    askVideoQuestion
+);
 export default router
 
