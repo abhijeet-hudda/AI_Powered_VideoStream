@@ -4,20 +4,44 @@ import { ApiResponse } from "../utils/APIResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/APIErrors.js";
 
+// export const getMyNotifications = asyncHandler(async (req, res) => {
+//   const notifications = await Notification.find({
+//     receiver: req.user._id,
+//   })
+//     .sort({ createdAt: -1 })
+//     .limit(50)
+//     .lean();
+//   console.log("cljdlfk j",notifications)
+// //    if(!notifications.length){
+// //     throw new ApiError(404,"No notifications found")
+// //    }
+//   return res.status(200).json(
+//     new ApiResponse(200, notifications, "Notifications fetched")
+//   );
+// });
+
 export const getMyNotifications = asyncHandler(async (req, res) => {
-  const notifications = await Notification.find({
-    receiver: req.user._id,
-  })
-    .sort({ createdAt: -1 })
+
+    const notifications = await Notification.find({
+        receiver: req.user._id,
+    })
+    .populate(
+        "sender",
+        "username avatar"
+    )
+    .sort({
+      createdAt: -1,
+    })
     .limit(50)
     .lean();
-  console.log("cljdlfk j",notifications)
-//    if(!notifications.length){
-//     throw new ApiError(404,"No notifications found")
-//    }
-  return res.status(200).json(
-    new ApiResponse(200, notifications, "Notifications fetched")
-  );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            notifications,
+            "Notifications fetched"
+        )
+    );
 });
 
 export const getUnreadCount = asyncHandler(async (req, res) => {

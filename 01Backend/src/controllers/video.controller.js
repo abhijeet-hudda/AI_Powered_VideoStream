@@ -17,6 +17,7 @@ import { Notification } from "../models/notification.model.js";
 import { io } from "../index.js";
 import aiService from "../services/ai.service.js";
 import backgroundAIService from "../services/backgroundAI.service.js";
+import { notifyNewVideo } from "../services/notification.service.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -201,28 +202,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
   setImmediate(() => {
     backgroundAIService.processVideo(createdVideo._id);
   });
-  //this is notification part 
-  const subscribers = await Subscription.find({
-    channel: createdVideo.owner,
-  }).select("subscriber");
-
-  for (const sub of subscribers) {
-    const notification = await Notification.create({
-      receiver: sub.subscriber,
-      sender: createdVideo.owner,
-      notificationtype: "NEW_VIDEO",
-      entityId: createdVideo._id,
-      entityType: "Video",
-      message: `${req.user.username} uploaded a new video`,
-    });
-    io.to(sub.subscriber.toString()).emit("notification", {
-      _id: notification._id,
-      notificationtype: notification.notificationtype,
-      message: notification.message,
-      entityId: createdVideo._id,
-      createdAt: notification.createdAt,
-    });
-  }
+  //this is notification part
+  await notifyNewVideo(createdVideo, req.user);
 
   return res
     .status(201)
