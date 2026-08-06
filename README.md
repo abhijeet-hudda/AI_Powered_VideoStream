@@ -1,11 +1,11 @@
-# VideoStream
+# AI Powered Video Stream
 
-VideoStream is a full-stack video platform with authentication, video uploads, playlists, subscriptions, comments, likes, notifications, semantic search, and an AI question-and-answer experience for processed videos.
+AI Powered Video Stream is a full-stack video platform with authentication, video uploads, playlists, subscriptions, comments, likes, notifications, semantic search, and an AI question-and-answer experience for processed videos.
 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/home-feed.png" alt="VideoStream home feed" width="48%" />
+  <img src="docs/images/home-feed.png" alt="AI Powered Video Stream home feed" width="48%" />
   <img src="docs/images/upload-video.png" alt="Video upload form" width="48%" />
 </p>
 <p align="center">
