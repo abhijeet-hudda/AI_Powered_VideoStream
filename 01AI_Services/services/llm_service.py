@@ -1,6 +1,5 @@
-from models.llm_model import llm
+from models.llm_model import model
 from utils.logger import logger
-
 
 class LLMService:
     """
@@ -11,7 +10,7 @@ class LLMService:
 
         logger.info("Generating response from LLM...")
 
-        response = llm.invoke(prompt)
+        response = model.invoke(prompt)
 
         logger.info("LLM response generated successfully.")
 

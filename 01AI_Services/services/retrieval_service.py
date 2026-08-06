@@ -30,7 +30,9 @@ class RetrievalService:
         logger.info(
             f"Retrieved {len(documents)} documents."
         )
-
+        logger.info(
+            f"first document content: {documents[0].page_content if documents else 'No documents found'}"
+        )
         return documents
 
 

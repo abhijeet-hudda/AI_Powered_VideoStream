@@ -1,8 +1,8 @@
 from services.retrieval_service import retrieval_service
 
 docs = retrieval_service.retrieve(
-    question="What is this video about?",
-    video_id="6984570ef4c65460cbe67bd5"
+    question="give one line summary of the video",
+    video_id="6972e6101bcc2d029a54c0c7"
 )
 
 print(f"Retrieved {len(docs)} documents\n")
