@@ -29,7 +29,7 @@ The Vite development server proxies `/api` requests to the API server. The API s
 - Python 3.11 or later
 - MongoDB instance
 - Cloudinary account
-- Pinecone index
+- Pinecone API key and indexes
 - Hugging Face token for downloading models, if required
 
 The AI service downloads embedding and Whisper models on first use. Ensure the machine can reach Hugging Face and has sufficient disk space and memory.
@@ -68,6 +68,7 @@ REFRESH_TOKEN_EXPIRY=10d
 CLOUDINARY_CLOUD_NAME=<cloud-name>
 CLOUDINARY_API_KEY=<api-key>
 CLOUDINARY_API_SECRET=<api-secret>
+PINECONE_API_KEY=<pinecone-api-key>
 PINECONE_INDEX=<video-search-index>
 AI_SERVICE_URL=http://127.0.0.1:8001
 ```
@@ -129,7 +130,7 @@ All API-server video routes require authentication.
 | `POST` | `/api/v1/videos/:videoId/process-ai` | Process a video for AI questions |
 | `POST` | `/api/v1/videos/:videoId/ask` | Ask a question about a processed video |
 
-The AI service also exposes `GET /health`, `POST /process-video`, `POST /ask`, `POST /embedding`, `POST /transcript`, and `DELETE /delete-video/:video_id`. Its interactive documentation is available at `http://127.0.0.1:8001/docs` while it is running.
+The AI service also exposes `GET /health`, `POST /process-video/`, `POST /ask`, `POST /embedding/`, `POST /transcript/`, and `DELETE /delete-video/:video_id`. Its interactive documentation is available at `http://127.0.0.1:8001/docs` while it is running.
 
 ## Available commands
 
