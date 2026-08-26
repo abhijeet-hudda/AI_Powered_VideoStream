@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://videostream-q68w.onrender.com/api/:path*"
+    }
+  ]
+}

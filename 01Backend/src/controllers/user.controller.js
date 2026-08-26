@@ -5,6 +5,16 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/APIResponse.js";
 import jwt from "jsonwebtoken";
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: process.env.COOKIE_SAME_SITE || "lax",
+  path: "/",
+};
+
 const generateRefreshAndAccessToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -13,7 +23,7 @@ const generateRefreshAndAccessToken = async (userId) => {
 
     //data base me save kro
     user.refreshToken = refreshToken;
-    user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -150,23 +160,16 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-    //sameSite: "none",
-  };
   //response send
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
         {
           user: loggedInUser,
-          accessToken,
-          refreshToken,
         },
         "User logged In Successfully"
       )
@@ -191,15 +194,10 @@ const logoutUser = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  const options = {
-    httpOnly: true,
-    secure: true,
-    //sameSite: "none",
-  };
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .json(new ApiResponse(200, {}, "user logged out"));
 });
 
@@ -231,20 +229,16 @@ const refreshAccesssToken = asyncHandler(async (req, res) => {
     if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh token is expired ans used");
     }
-    const { accessToken, newRefreshToken } =
+    const { accessToken, refreshToken } =
       await generateRefreshAndAccessToken(user._id);
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,
-          { accessToken, refreshToken: newRefreshToken },
+          {},
           "Access Token refreshed"
         )
       );
